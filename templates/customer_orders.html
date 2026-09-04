@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pesanan Saya - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">MENU CUSTOMER</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('customer_shop') }}">
+                    🏪 Belanja Produk
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('customer_cart') }}">
+                    🛒 Keranjang
+                    {% if customer_cart_count > 0 %}
+                        ({{ customer_cart_count }})
+                    {% endif %}
+                </a>
+            </li>
+
+            <li>
+                <a
+                    href="{{ url_for('customer_orders') }}"
+                    class="active"
+                >
+                    📦 Pesanan Saya
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        CUSTOMER
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Pesanan Saya</h1>
+
+                <p>
+                    Pantau pembayaran dan status pengambilan barang Anda.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('customer_shop') }}"
+                class="btn-primary"
+            >
+                🏪 Belanja Lagi
+            </a>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Riwayat Pesanan</h2>
+
+                    <p>
+                        Pesanan online yang sudah dibayar siap diambil di Sahabat Desa Mart.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nomor Pesanan</th>
+                            <th>Tanggal</th>
+                            <th>Total Item</th>
+                            <th>Total Belanja</th>
+                            <th>Pembayaran</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+
+                            <td>
+                                <strong>{{ order[1] }}</strong>
+                            </td>
+
+                            <td>
+                                {{ order[2].strftime("%d-%m-%Y %H:%M") }}
+                            </td>
+
+                            <td>{{ order[3] }}</td>
+
+                            <td>
+                                Rp{{ "{:,.0f}".format(order[4]).replace(",", ".") }}
+                            </td>
+
+                            <td>
+                                {% if order[7] == "cash" %}
+                                    <strong>Tunai di Kasir</strong>
+
+                                {% elif order[7] == "qris" %}
+                                    <strong>QRIS</strong>
+
+                                {% elif order[7] == "ewallet" %}
+                                    <strong>E-Wallet</strong>
+
+                                {% else %}
+                                    -
+                                {% endif %}
+
+                                {% if order[8] %}
+                                    <br>
+                                    <small>{{ order[8] }}</small>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if order[5] == "pending" %}
+                                    <span class="status-badge pending">
+                                        Menunggu Pembayaran
+                                    </span>
+
+                                {% elif order[5] == "confirmed" %}
+                                    <span class="status-badge completed">
+                                        Sudah Dibayar - Siap Diambil
+                                    </span>
+
+                                {% elif order[5] == "completed" %}
+                                    <span class="status-badge completed">
+                                        Pesanan Selesai
+                                    </span>
+
+                                {% else %}
+                                    <span class="status-badge cancelled">
+                                        Dibatalkan
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for('sale_receipt', sale_id=order[0]) }}"
+                                    class="btn-edit"
+                                >
+                                    Detail
+                                </a>
+
+                                {% if order[5] == "pending" and order[7] == "cash" %}
+                                <form
+                                    action="{{ url_for('customer_cancel_order', sale_id=order[0]) }}"
+                                    method="POST"
+                                    class="inline-form"
+                                    onsubmit="return confirm('Batalkan pesanan tunai ini?');"
+                                >
+                                    <button
+                                        type="submit"
+                                        class="btn-delete"
+                                    >
+                                        Batal
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="empty-data">
+                                Anda belum memiliki pesanan.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

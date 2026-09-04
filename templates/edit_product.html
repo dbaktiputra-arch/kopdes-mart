@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Edit Produk - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">MENU ADMIN</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('categories') }}">
+                    📁 Kategori Barang
+                </a>
+            </li>
+
+            <li>
+                <a
+                    href="{{ url_for('products') }}"
+                    class="active"
+                >
+                    📦 Data Produk
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('reports') }}">
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        ADMINISTRATOR
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Edit Produk</h1>
+
+                <p>
+                    Perbarui kategori, harga, stok, satuan, atau status produk.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('products') }}"
+                class="btn-secondary"
+            >
+                ← Kembali
+            </a>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category_name, message in messages %}
+                    <p class="flash-message {{ category_name }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="content-card form-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Data Produk</h2>
+
+                    <p>
+                        Kode produk tidak dapat diubah karena dibuat otomatis.
+                        Harga dapat dinaikkan atau diturunkan per Rp1.000.
+                    </p>
+                </div>
+            </div>
+
+            <form method="POST">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="product_code">
+                            Kode Produk
+                        </label>
+
+                        <input
+                            type="text"
+                            id="product_code"
+                            value="{{ product[1] }}"
+                            disabled
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category_id">
+                            Kategori Produk
+                        </label>
+
+                        <select
+                            id="category_id"
+                            name="category_id"
+                            required
+                        >
+                            <option value="">
+                                -- Pilih Kategori --
+                            </option>
+
+                            {% for category in categories %}
+                            <option
+                                value="{{ category[0] }}"
+                                {% if product[2] == category[0] %}selected{% endif %}
+                            >
+                                {{ category[1] }} - {{ category[2] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group form-full-width">
+                        <label for="product_name">
+                            Nama Produk
+                        </label>
+
+                        <input
+                            type="text"
+                            id="product_name"
+                            name="product_name"
+                            value="{{ product[3] }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="purchase_price">
+                            Harga Beli
+                        </label>
+
+                        <input
+                            type="number"
+                            id="purchase_price"
+                            name="purchase_price"
+                            min="0"
+                            step="1000"
+                            value="{{ product[4] }}"
+                            required
+                        >
+
+                        <small class="form-help-text">
+                            Panah naik/turun berubah Rp1.000.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selling_price">
+                            Harga Jual
+                        </label>
+
+                        <input
+                            type="number"
+                            id="selling_price"
+                            name="selling_price"
+                            min="0"
+                            step="1000"
+                            value="{{ product[5] }}"
+                            required
+                        >
+
+                        <small class="form-help-text">
+                            Panah naik/turun berubah Rp1.000.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock">
+                            Stok Produk
+                        </label>
+
+                        <input
+                            type="number"
+                            id="stock"
+                            name="stock"
+                            min="0"
+                            step="1"
+                            value="{{ product[6] }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="min_stock">
+                            Stok Minimum
+                        </label>
+
+                        <input
+                            type="number"
+                            id="min_stock"
+                            name="min_stock"
+                            min="0"
+                            step="1"
+                            value="{{ product[7] }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unit">
+                            Satuan Produk
+                        </label>
+
+                        <select
+                            id="unit"
+                            name="unit"
+                            required
+                        >
+                            <option
+                                value="pcs"
+                                {% if product[8] == "pcs" %}selected{% endif %}
+                            >
+                                pcs
+                            </option>
+
+                            <option
+                                value="botol"
+                                {% if product[8] == "botol" %}selected{% endif %}
+                            >
+                                botol
+                            </option>
+
+                            <option
+                                value="bungkus"
+                                {% if product[8] == "bungkus" %}selected{% endif %}
+                            >
+                                bungkus
+                            </option>
+
+                            <option
+                                value="sachet"
+                                {% if product[8] == "sachet" %}selected{% endif %}
+                            >
+                                sachet
+                            </option>
+
+                            <option
+                                value="pack"
+                                {% if product[8] == "pack" %}selected{% endif %}
+                            >
+                                pack
+                            </option>
+
+                            <option
+                                value="dus"
+                                {% if product[8] == "dus" %}selected{% endif %}
+                            >
+                                dus
+                            </option>
+
+                            <option
+                                value="kotak"
+                                {% if product[8] == "kotak" %}selected{% endif %}
+                            >
+                                kotak
+                            </option>
+
+                            <option
+                                value="karung"
+                                {% if product[8] == "karung" %}selected{% endif %}
+                            >
+                                karung
+                            </option>
+
+                            <option
+                                value="kg"
+                                {% if product[8] == "kg" %}selected{% endif %}
+                            >
+                                kg
+                            </option>
+
+                            <option
+                                value="gram"
+                                {% if product[8] == "gram" %}selected{% endif %}
+                            >
+                                gram
+                            </option>
+
+                            <option
+                                value="liter"
+                                {% if product[8] == "liter" %}selected{% endif %}
+                            >
+                                liter
+                            </option>
+
+                            <option
+                                value="ml"
+                                {% if product[8] == "ml" %}selected{% endif %}
+                            >
+                                ml
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="checkbox-group">
+                    <input
+                        type="checkbox"
+                        id="is_active"
+                        name="is_active"
+                        {% if product[9] %}checked{% endif %}
+                    >
+
+                    <label for="is_active">
+                        Produk aktif dan dapat dibeli customer
+                    </label>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">
+                        💾 Simpan Perubahan
+                    </button>
+
+                    <a
+                        href="{{ url_for('products') }}"
+                        class="btn-secondary"
+                    >
+                        Batal
+                    </a>
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

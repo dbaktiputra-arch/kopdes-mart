@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Struk Pesanan - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="receipt-page">
+
+    <section class="receipt-card">
+
+        <header class="receipt-header">
+            <div class="brand-logo">S</div>
+
+            <h1>Sahabat Desa Mart</h1>
+
+            <p>Belanja Dekat, Manfaat Hebat</p>
+            <p>Sistem Belanja dan Pemesanan Produk Desa</p>
+        </header>
+
+        <hr>
+
+        <section class="receipt-info">
+            <p>
+                <strong>No. Pesanan:</strong>
+                {{ sale[1] }}
+            </p>
+
+            <p>
+                <strong>Tanggal Pesan:</strong>
+                {{ sale[2].strftime("%d-%m-%Y %H:%M") }}
+            </p>
+
+            <p>
+                <strong>Customer:</strong>
+                {{ sale[9] }}
+            </p>
+
+            <p>
+                <strong>Metode Pembayaran:</strong>
+
+                {% if sale[11] == "cash" %}
+                    Tunai di Kasir
+
+                {% elif sale[11] == "qris" %}
+                    QRIS
+
+                {% elif sale[11] == "ewallet" %}
+                    E-Wallet
+
+                {% else %}
+                    -
+                {% endif %}
+            </p>
+
+            {% if sale[12] %}
+            <p>
+                <strong>Referensi Pembayaran:</strong>
+                {{ sale[12] }}
+            </p>
+            {% endif %}
+
+            <p>
+                <strong>Petugas Kasir:</strong>
+                {{ sale[10] }}
+            </p>
+
+            <p>
+                <strong>Status:</strong>
+
+                {% if sale[8] == "pending" %}
+                    <span class="status-badge pending">
+                        Menunggu Pembayaran
+                    </span>
+
+                {% elif sale[8] == "confirmed" %}
+                    <span class="status-badge completed">
+                        Sudah Dibayar - Siap Diambil
+                    </span>
+
+                {% elif sale[8] == "completed" %}
+                    <span class="status-badge completed">
+                        Pesanan Selesai
+                    </span>
+
+                {% else %}
+                    <span class="status-badge cancelled">
+                        Dibatalkan
+                    </span>
+                {% endif %}
+            </p>
+        </section>
+
+        <hr>
+
+        <section>
+            <table class="receipt-table">
+                <thead>
+                    <tr>
+                        <th>Produk</th>
+                        <th>Qty</th>
+                        <th>Harga</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in sale_items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item[1] }}</strong>
+                            <br>
+                            <small>{{ item[0] }}</small>
+                        </td>
+
+                        <td>{{ item[3] }}</td>
+
+                        <td>
+                            Rp{{ "{:,.0f}".format(item[2]).replace(",", ".") }}
+                        </td>
+
+                        <td>
+                            Rp{{ "{:,.0f}".format(item[4]).replace(",", ".") }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <hr>
+
+        <section class="receipt-total">
+            <p>
+                <strong>Total Item:</strong>
+                {{ sale[3] }}
+            </p>
+
+            <p>
+                <strong>Total Belanja:</strong>
+                Rp{{ "{:,.0f}".format(sale[4]).replace(",", ".") }}
+            </p>
+
+            {% if sale[8] == "confirmed" or sale[8] == "completed" %}
+            <p>
+                <strong>Total Dibayar:</strong>
+                Rp{{ "{:,.0f}".format(sale[5]).replace(",", ".") }}
+            </p>
+            {% endif %}
+
+            {% if sale[11] == "cash" and sale[8] == "completed" %}
+            <p>
+                <strong>Kembalian:</strong>
+                Rp{{ "{:,.0f}".format(sale[6]).replace(",", ".") }}
+            </p>
+            {% endif %}
+
+            {% if sale[13] %}
+            <p>
+                <strong>Waktu Pembayaran:</strong>
+                {{ sale[13].strftime("%d-%m-%Y %H:%M") }}
+            </p>
+            {% endif %}
+
+            {% if sale[14] %}
+            <p>
+                <strong>Waktu Barang Diserahkan:</strong>
+                {{ sale[14].strftime("%d-%m-%Y %H:%M") }}
+            </p>
+            {% endif %}
+
+            {% if sale[8] == "pending" %}
+            <h2 style="color: #a36600;">
+                Menunggu Pembayaran Kasir
+            </h2>
+
+            <p style="margin-top: 10px;">
+                Tunjukkan nomor pesanan ini kepada kasir saat melakukan pembayaran.
+            </p>
+
+            {% elif sale[8] == "confirmed" %}
+            <h2 style="color: #13894d;">
+                Pembayaran Berhasil
+            </h2>
+
+            <p style="margin-top: 10px;">
+                Pesanan sudah dibayar. Silakan datang ke Sahabat Desa Mart
+                untuk mengambil barang.
+            </p>
+
+            {% elif sale[8] == "completed" %}
+            <h2 style="color: #13894d;">
+                Terima Kasih
+            </h2>
+
+            {% else %}
+            <h2 style="color: #8f111b;">
+                Pesanan Dibatalkan
+            </h2>
+            {% endif %}
+        </section>
+
+        {% if sale[7] %}
+        <section class="receipt-notes">
+            <strong>Catatan Pesanan:</strong>
+            <p>{{ sale[7] }}</p>
+        </section>
+        {% endif %}
+
+        <hr>
+
+        <section class="receipt-header">
+            {% if sale[8] == "completed" %}
+                <p>Terima kasih telah berbelanja di Sahabat Desa Mart.</p>
+
+            {% elif sale[8] == "confirmed" %}
+                <p>Pesanan Anda siap diambil di toko.</p>
+
+            {% elif sale[8] == "pending" %}
+                <p>Pesanan belum selesai sampai pembayaran dilakukan di kasir.</p>
+
+            {% else %}
+                <p>Pesanan ini telah dibatalkan.</p>
+            {% endif %}
+        </section>
+
+        <div class="receipt-actions">
+
+            {% if current_user.role == "customer" %}
+                <a
+                    href="{{ url_for('customer_orders') }}"
+                    class="btn-secondary"
+                >
+                    ← Pesanan Saya
+                </a>
+            {% else %}
+                <a
+                    href="{{ url_for('staff_orders') }}"
+                    class="btn-secondary"
+                >
+                    ← Proses Pesanan
+                </a>
+            {% endif %}
+
+            {% if sale[8] == "confirmed" or sale[8] == "completed" %}
+            <button
+                type="button"
+                class="btn-primary"
+                onclick="window.print()"
+            >
+                🖨️ Cetak Struk
+            </button>
+            {% endif %}
+
+        </div>
+
+    </section>
+
+</body>
+</html>

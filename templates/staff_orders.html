@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Proses Pesanan - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">MENU KASIR</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('products') }}">
+                    📦 Data Produk
+                </a>
+            </li>
+
+            <li>
+                <a
+                    href="{{ url_for('staff_orders') }}"
+                    class="active"
+                >
+                    💳 Proses Pesanan
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('reports') }}">
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        KASIR
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Proses Pesanan</h1>
+
+                <p>
+                    Layani pembayaran tunai dan serahkan pesanan online
+                    yang sudah dibayar customer.
+                </p>
+            </div>
+
+            <div class="user-box">
+                💳 Kasir Aktif
+            </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Cari Pesanan Customer</h2>
+
+                    <p>
+                        Cari menggunakan nomor pesanan, nama customer,
+                        atau username customer.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                action="{{ url_for('staff_orders') }}"
+                method="GET"
+                class="search-form"
+            >
+                <input
+                    type="text"
+                    name="keyword"
+                    value="{{ keyword }}"
+                    placeholder="Cari invoice, nama customer, atau username..."
+                >
+
+                <select name="status">
+                    <option value="">Semua Status</option>
+
+                    <option
+                        value="pending"
+                        {% if status_filter == "pending" %}selected{% endif %}
+                    >
+                        Menunggu Pembayaran Tunai
+                    </option>
+
+                    <option
+                        value="confirmed"
+                        {% if status_filter == "confirmed" %}selected{% endif %}
+                    >
+                        Sudah Dibayar - Siap Diambil
+                    </option>
+
+                    <option
+                        value="completed"
+                        {% if status_filter == "completed" %}selected{% endif %}
+                    >
+                        Pesanan Selesai
+                    </option>
+
+                    <option
+                        value="cancelled"
+                        {% if status_filter == "cancelled" %}selected{% endif %}
+                    >
+                        Dibatalkan
+                    </option>
+                </select>
+
+                <button type="submit" class="btn-primary">
+                    🔎 Cari
+                </button>
+
+                <a
+                    href="{{ url_for('staff_orders') }}"
+                    class="btn-secondary"
+                >
+                    Reset
+                </a>
+            </form>
+
+        </section>
+
+        <br>
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Daftar Pesanan Customer</h2>
+
+                    <p>
+                        Pesanan tunai dibayar di kasir. Pesanan QRIS atau E-Wallet
+                        hanya perlu diserahkan setelah customer datang ke toko.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Invoice</th>
+                            <th>Tanggal</th>
+                            <th>Customer</th>
+                            <th>Total Item</th>
+                            <th>Total Belanja</th>
+                            <th>Pembayaran</th>
+                            <th>Status</th>
+                            <th>Petugas</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+
+                            <td>
+                                <strong>{{ order[1] }}</strong>
+                            </td>
+
+                            <td>
+                                {{ order[2].strftime("%d-%m-%Y %H:%M") }}
+                            </td>
+
+                            <td>
+                                <strong>{{ order[3] }}</strong>
+                                <br>
+                                <small>@{{ order[4] }}</small>
+                            </td>
+
+                            <td>{{ order[5] }}</td>
+
+                            <td>
+                                Rp{{ "{:,.0f}".format(order[6]).replace(",", ".") }}
+                            </td>
+
+                            <td>
+                                {% if order[12] == "cash" %}
+                                    <strong>Tunai</strong>
+
+                                {% elif order[12] == "qris" %}
+                                    <strong>QRIS</strong>
+
+                                {% elif order[12] == "ewallet" %}
+                                    <strong>E-Wallet</strong>
+
+                                {% else %}
+                                    -
+                                {% endif %}
+
+                                {% if order[13] %}
+                                    <br>
+                                    <small>{{ order[13] }}</small>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if order[9] == "pending" %}
+                                    <span class="status-badge pending">
+                                        Menunggu Bayar
+                                    </span>
+
+                                {% elif order[9] == "confirmed" %}
+                                    <span class="status-badge completed">
+                                        Siap Diambil
+                                    </span>
+
+                                {% elif order[9] == "completed" %}
+                                    <span class="status-badge completed">
+                                        Selesai
+                                    </span>
+
+                                {% else %}
+                                    <span class="status-badge cancelled">
+                                        Dibatalkan
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {{ order[11] }}
+                            </td>
+
+                            <td>
+                                {% if order[9] == "pending" and order[12] == "cash" %}
+
+                                <details style="min-width: 225px;">
+                                    <summary
+                                        class="btn-primary"
+                                        style="display: inline-flex;"
+                                    >
+                                        💵 Terima Pembayaran
+                                    </summary>
+
+                                    <form
+                                        action="{{ url_for('process_cash_payment', sale_id=order[0]) }}"
+                                        method="POST"
+                                        style="margin-top: 10px;"
+                                    >
+                                        <label
+                                            for="cash_amount_{{ order[0] }}"
+                                            style="display: block; margin-bottom: 6px; font-size: 11px; font-weight: 800;"
+                                        >
+                                            Uang Bayar Customer
+                                        </label>
+
+                                        <input
+                                            type="number"
+                                            id="cash_amount_{{ order[0] }}"
+                                            name="cash_amount"
+                                            min="{{ order[6] }}"
+                                            step="1"
+                                            required
+                                            placeholder="Minimal {{ order[6] }}"
+                                            style="width: 100%; min-height: 40px; padding: 8px; border: 1px solid #e5e7eb; border-radius: 8px;"
+                                        >
+
+                                        <button
+                                            type="submit"
+                                            class="btn-primary"
+                                            style="width: 100%; margin-top: 8px;"
+                                        >
+                                            Simpan Pembayaran
+                                        </button>
+                                    </form>
+                                </details>
+
+                                {% elif order[9] == "confirmed" and order[12] in ("qris", "ewallet") %}
+
+                                <form
+                                    action="{{ url_for('handover_online_order', sale_id=order[0]) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Pastikan barang sudah diberikan kepada customer. Lanjutkan?');"
+                                >
+                                    <button
+                                        type="submit"
+                                        class="btn-primary"
+                                    >
+                                        📦 Serahkan Barang
+                                    </button>
+                                </form>
+
+                                {% else %}
+
+                                <a
+                                    href="{{ url_for('sale_receipt', sale_id=order[0]) }}"
+                                    class="btn-edit"
+                                >
+                                    🧾 Struk
+                                </a>
+
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="10" class="empty-data">
+                                Belum ada pesanan customer yang sesuai filter.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

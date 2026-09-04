@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="auth-page">
+
+    <main class="auth-wrapper">
+
+        <section class="auth-brand-panel">
+
+            <div class="auth-brand-content">
+                <div class="auth-logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo">
+                </div>
+
+                <h1>Sahabat Desa Mart</h1>
+
+                <p>
+                    Belanja Dekat, Manfaat Hebat.
+                    Sistem pemesanan kebutuhan warga desa dengan pembayaran tunai,
+                    QRIS, dan E-Wallet simulasi.
+                </p>
+
+                <div class="auth-feature-list">
+
+                    <div class="auth-feature-item">
+                        <span class="auth-feature-icon">🛒</span>
+                        Belanja produk dari mana saja
+                    </div>
+
+                    <div class="auth-feature-item">
+                        <span class="auth-feature-icon">📱</span>
+                        Pembayaran QRIS dan E-Wallet simulasi
+                    </div>
+
+                    <div class="auth-feature-item">
+                        <span class="auth-feature-icon">📦</span>
+                        Pesanan siap diambil di toko
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="auth-brand-footer">
+                © 2026 Sahabat Desa Mart
+            </div>
+
+        </section>
+
+        <section class="auth-form-panel">
+
+            <div class="auth-form-content">
+
+                <h2>Selamat Datang</h2>
+
+                <p>
+                    Silakan masuk untuk melanjutkan ke sistem Sahabat Desa Mart.
+                </p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <p class="flash-message {{ category }}">
+                                {{ message }}
+                            </p>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+
+                    <div class="form-group">
+                        <label for="username">
+                            Username
+                        </label>
+
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            placeholder="Masukkan username"
+                            autocomplete="username"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Masukkan password"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                        style="width: 100%; margin-top: 8px;"
+                    >
+                        🔐 Login
+                    </button>
+
+                </form>
+
+                <p class="auth-footer-text">
+                    Belum punya akun customer?
+                    <a href="{{ url_for('register') }}">
+                        Daftar sekarang
+                    </a>
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

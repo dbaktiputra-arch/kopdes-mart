@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Kategori Barang - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">MENU ADMIN</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            <li>
+                <a
+                    href="{{ url_for('categories') }}"
+                    class="active"
+                >
+                    📁 Kategori Barang
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('products') }}">
+                    📦 Data Produk
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('reports') }}">
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        ADMINISTRATOR
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Kategori Barang</h1>
+
+                <p>
+                    Kelola kategori produk agar data Sahabat Desa Mart tetap rapi.
+                </p>
+            </div>
+
+            <div class="user-box">
+                📁 {{ categories|length }} Kategori
+            </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Tambah Kategori Baru</h2>
+
+                    <p>
+                        Kode kategori akan dibuat otomatis oleh sistem.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                action="{{ url_for('add_category') }}"
+                method="POST"
+            >
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="category_name">
+                            Nama Kategori
+                        </label>
+
+                        <input
+                            type="text"
+                            id="category_name"
+                            name="category_name"
+                            placeholder="Contoh: Produk UMKM Desa"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">
+                            Deskripsi Kategori
+                        </label>
+
+                        <input
+                            type="text"
+                            id="description"
+                            name="description"
+                            placeholder="Contoh: Produk hasil usaha warga desa"
+                        >
+                    </div>
+
+                </div>
+
+                <div class="checkbox-group">
+                    <input
+                        type="checkbox"
+                        id="is_active"
+                        name="is_active"
+                        checked
+                    >
+
+                    <label for="is_active">
+                        Kategori aktif dan dapat digunakan untuk produk
+                    </label>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">
+                        ➕ Tambah Kategori
+                    </button>
+                </div>
+            </form>
+
+        </section>
+
+        <br>
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Daftar Kategori</h2>
+
+                    <p>
+                        Kategori yang tidak aktif tidak dapat dipilih saat menambah produk baru.
+                    </p>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Kode Kategori</th>
+                            <th>Nama Kategori</th>
+                            <th>Deskripsi</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for category in categories %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+
+                            <td>
+                                <strong>{{ category[1] }}</strong>
+                            </td>
+
+                            <td>{{ category[2] }}</td>
+
+                            <td>
+                                {{ category[3] if category[3] else "-" }}
+                            </td>
+
+                            <td>
+                                {% if category[4] %}
+                                    <span class="status-badge completed">
+                                        Aktif
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge cancelled">
+                                        Nonaktif
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                <a
+                                    href="{{ url_for('edit_category', category_id=category[0]) }}"
+                                    class="btn-edit"
+                                >
+                                    ✏️ Edit
+                                </a>
+
+                                <form
+                                    action="{{ url_for('delete_category', category_id=category[0]) }}"
+                                    method="POST"
+                                    class="inline-form"
+                                    onsubmit="return confirm('Yakin ingin menghapus kategori ini?');"
+                                >
+                                    <button
+                                        type="submit"
+                                        class="btn-delete"
+                                    >
+                                        🗑️ Hapus
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-data">
+                                Belum ada kategori barang.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

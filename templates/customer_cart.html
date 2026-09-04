@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Keranjang Belanja - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">MENU CUSTOMER</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('customer_shop') }}">
+                    🏪 Belanja Produk
+                </a>
+            </li>
+
+            <li>
+                <a
+                    href="{{ url_for('customer_cart') }}"
+                    class="active"
+                >
+                    🛒 Keranjang
+                    {% if customer_cart_count > 0 %}
+                        ({{ customer_cart_count }})
+                    {% endif %}
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('customer_orders') }}">
+                    📦 Pesanan Saya
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        CUSTOMER
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Keranjang Belanja</h1>
+
+                <p>
+                    Periksa produk dan pilih metode pembayaran sebelum membuat pesanan.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('customer_shop') }}"
+                class="btn-secondary"
+            >
+                ← Lanjut Belanja
+            </a>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if cart_items %}
+
+        <section class="checkout-grid">
+
+            <section class="content-card">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Produk di Keranjang</h2>
+
+                        <p>
+                            Ubah jumlah atau hapus produk sebelum checkout.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Kode</th>
+                                <th>Produk</th>
+                                <th>Kategori</th>
+                                <th>Harga</th>
+                                <th>Jumlah</th>
+                                <th>Subtotal</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for item in cart_items %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>{{ item.product_code }}</td>
+
+                                <td>
+                                    <strong>{{ item.product_name }}</strong>
+                                    <br>
+
+                                    <small>
+                                        Stok tersedia:
+                                        {{ item.stock }} {{ item.unit }}
+                                    </small>
+                                </td>
+
+                                <td>{{ item.category_name }}</td>
+
+                                <td>
+                                    Rp{{ "{:,.0f}".format(item.selling_price).replace(",", ".") }}
+                                </td>
+
+                                <td>
+                                    <form
+                                        action="{{ url_for('customer_cart_update') }}"
+                                        method="POST"
+                                        class="quantity-form"
+                                    >
+                                        <input
+                                            type="hidden"
+                                            name="product_id"
+                                            value="{{ item.id }}"
+                                        >
+
+                                        <input
+                                            type="number"
+                                            name="quantity"
+                                            value="{{ item.quantity }}"
+                                            min="1"
+                                            max="{{ item.stock }}"
+                                            required
+                                        >
+
+                                        <button
+                                            type="submit"
+                                            class="btn-edit"
+                                        >
+                                            Update
+                                        </button>
+                                    </form>
+                                </td>
+
+                                <td>
+                                    Rp{{ "{:,.0f}".format(item.subtotal).replace(",", ".") }}
+                                </td>
+
+                                <td>
+                                    <form
+                                        action="{{ url_for('customer_cart_remove', product_id=item.id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Hapus produk ini dari keranjang?');"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="btn-delete"
+                                        >
+                                            🗑️ Hapus
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+            <aside class="content-card total-card">
+
+                <h2>Ringkasan Pesanan</h2>
+
+                <p>Total Jenis Produk</p>
+                <h3>{{ cart_items|length }} Produk</h3>
+
+                <br>
+
+                <p>Total Item</p>
+                <h3>{{ total_items }} Item</h3>
+
+                <br>
+
+                <p>Total Belanja</p>
+
+                <h1>
+                    Rp{{ "{:,.0f}".format(total_amount).replace(",", ".") }}
+                </h1>
+
+                <hr>
+
+                <form
+                    action="{{ url_for('customer_checkout') }}"
+                    method="POST"
+                >
+                    <div class="form-group">
+                        <label for="payment_method">
+                            Metode Pembayaran
+                        </label>
+
+                        <select
+                            id="payment_method"
+                            name="payment_method"
+                            required
+                        >
+                            <option value="">
+                                -- Pilih Metode Pembayaran --
+                            </option>
+
+                            <option value="cash">
+                                Tunai di Kasir
+                            </option>
+
+                            <option value="qris">
+                                QRIS - Pembayaran Online
+                            </option>
+
+                            <option value="ewallet">
+                                E-Wallet - Pembayaran Online
+                            </option>
+                        </select>
+                    </div>
+
+                    <p class="muted-text" style="margin-bottom: 16px;">
+                        <strong>Tunai di Kasir:</strong>
+                        pesanan dibuat dulu, kemudian bayar saat datang ke toko.
+                        <br><br>
+
+                        <strong>QRIS / E-Wallet:</strong>
+                        pembayaran online simulasi berhasil secara langsung,
+                        stok langsung berkurang, dan barang siap diambil.
+                    </p>
+
+                    <div class="form-group">
+                        <label for="notes">
+                            Catatan Pesanan
+                        </label>
+
+                        <textarea
+                            id="notes"
+                            name="notes"
+                            placeholder="Contoh: Saya ambil pesanan sore hari"
+                        ></textarea>
+                    </div>
+
+                    <button
+                        type="submit"
+                        class="btn-primary"
+                        style="width: 100%;"
+                        onclick="return confirm('Lanjutkan membuat pesanan dengan metode pembayaran yang dipilih?');"
+                    >
+                        ✅ Buat Pesanan
+                    </button>
+                </form>
+
+            </aside>
+
+        </section>
+
+        {% else %}
+
+        <section class="content-card">
+
+            <div class="empty-product">
+                <h3>Keranjang Masih Kosong</h3>
+
+                <p>
+                    Pilih produk terlebih dahulu dari katalog Sahabat Desa Mart.
+                </p>
+
+                <br>
+
+                <a
+                    href="{{ url_for('customer_shop') }}"
+                    class="btn-primary"
+                >
+                    🏪 Mulai Belanja
+                </a>
+            </div>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+</body>
+</html>

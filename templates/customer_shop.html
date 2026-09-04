@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Belanja Produk - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page customer-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">MENU CUSTOMER</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a
+                    href="{{ url_for('customer_shop') }}"
+                    class="active"
+                >
+                    🏪 Belanja Produk
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('customer_cart') }}">
+                    🛒 Keranjang
+                    {% if customer_cart_count > 0 %}
+                        ({{ customer_cart_count }})
+                    {% endif %}
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('customer_orders') }}">
+                    📦 Pesanan Saya
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        CUSTOMER
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Belanja Produk</h1>
+
+                <p>
+                    Pilih kebutuhan Anda, masukkan ke keranjang, lalu pilih metode pembayaran.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('customer_cart') }}"
+                class="btn-primary"
+            >
+                🛒 Keranjang
+                {% if customer_cart_count > 0 %}
+                    ({{ customer_cart_count }})
+                {% endif %}
+            </a>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="customer-hero-card">
+
+            <div>
+                <span class="customer-hero-badge">
+                    🏪 Belanja Mudah dari Mana Saja
+                </span>
+
+                <h2>
+                    Pesan kebutuhan Anda sebelum datang ke toko.
+                </h2>
+
+                <p>
+                    Gunakan QRIS atau E-Wallet untuk pembayaran online simulasi,
+                    lalu barang bisa langsung diambil di Sahabat Desa Mart.
+                    Untuk pembayaran tunai, cukup pilih <strong>Tunai di Kasir</strong>
+                    saat checkout.
+                </p>
+            </div>
+
+            <div class="customer-hero-icon">
+                🛍️
+            </div>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Katalog Produk</h2>
+
+                    <p>
+                        Semua produk yang tersedia dan memiliki stok dapat dipesan.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                action="{{ url_for('customer_shop') }}"
+                method="GET"
+                class="search-form"
+            >
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search }}"
+                    placeholder="Cari nama produk, kode produk, atau kategori..."
+                >
+
+                <button type="submit" class="btn-primary">
+                    🔎 Cari Produk
+                </button>
+
+                <a
+                    href="{{ url_for('customer_shop') }}"
+                    class="btn-secondary"
+                >
+                    Reset
+                </a>
+            </form>
+
+            <br>
+
+            <section class="product-grid">
+
+                {% for product in products %}
+                <article class="product-card">
+
+                    <div class="product-card-top">
+                        <span class="product-category-badge">
+                            {{ product[3] }}
+                        </span>
+
+                        <span class="product-code">
+                            {{ product[1] }}
+                        </span>
+                    </div>
+
+                    <div class="product-image-placeholder">
+                        📦
+                    </div>
+
+                    <div class="product-card-body">
+                        <h3>{{ product[2] }}</h3>
+
+                        <p class="product-price">
+                            Rp{{ "{:,.0f}".format(product[4]).replace(",", ".") }}
+                        </p>
+
+                        <p class="product-stock">
+                            Stok tersedia:
+                            <strong>{{ product[5] }} {{ product[6] }}</strong>
+                        </p>
+
+                        <form
+                            action="{{ url_for('customer_cart_add', product_id=product[0]) }}"
+                            method="POST"
+                            class="product-cart-form"
+                        >
+                            <div class="product-quantity-wrap">
+                                <label for="quantity_{{ product[0] }}">
+                                    Jumlah
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="quantity_{{ product[0] }}"
+                                    name="quantity"
+                                    value="1"
+                                    min="1"
+                                    max="{{ product[5] }}"
+                                    required
+                                >
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn-primary"
+                            >
+                                🛒 Tambah Keranjang
+                            </button>
+                        </form>
+                    </div>
+
+                </article>
+
+                {% else %}
+                <div class="empty-product">
+                    <h3>Produk Tidak Ditemukan</h3>
+
+                    <p>
+                        Coba gunakan kata kunci lain atau tunggu produk tersedia kembali.
+                    </p>
+
+                    <br>
+
+                    <a
+                        href="{{ url_for('customer_shop') }}"
+                        class="btn-primary"
+                    >
+                        Lihat Semua Produk
+                    </a>
+                </div>
+                {% endfor %}
+
+            </section>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

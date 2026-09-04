@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Data Produk - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">
+            {% if current_user.role == "admin" %}
+                MENU ADMIN
+            {% else %}
+                MENU KASIR
+            {% endif %}
+        </p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            {% if current_user.role == "admin" %}
+            <li>
+                <a href="{{ url_for('categories') }}">
+                    📁 Kategori Barang
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a
+                    href="{{ url_for('products') }}"
+                    class="active"
+                >
+                    📦 Data Produk
+                </a>
+            </li>
+
+            {% if current_user.role == "kasir" %}
+            <li>
+                <a href="{{ url_for('staff_orders') }}">
+                    💳 Proses Pesanan
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a href="{{ url_for('reports') }}">
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        {% if current_user.role == "admin" %}
+                            ADMINISTRATOR
+                        {% else %}
+                            KASIR
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Data Produk</h1>
+
+                <p>
+                    Kelola harga, stok, kategori, satuan, dan status produk
+                    Sahabat Desa Mart.
+                </p>
+            </div>
+
+            <div class="user-box">
+                📦 {{ products|length }} Produk
+            </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if current_user.role == "admin" %}
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Tambah Produk Baru</h2>
+
+                    <p>
+                        Kode produk dibuat otomatis. Gunakan panah harga untuk
+                        menaikkan atau menurunkan nominal per Rp1.000.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                action="{{ url_for('add_product') }}"
+                method="POST"
+            >
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label for="category_id">
+                            Kategori Produk
+                        </label>
+
+                        <select
+                            id="category_id"
+                            name="category_id"
+                            required
+                        >
+                            <option value="">
+                                -- Pilih Kategori --
+                            </option>
+
+                            {% for category in categories %}
+                            <option value="{{ category[0] }}">
+                                {{ category[1] }} - {{ category[2] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="product_name">
+                            Nama Produk
+                        </label>
+
+                        <input
+                            type="text"
+                            id="product_name"
+                            name="product_name"
+                            placeholder="Contoh: Minyak Goreng 1 Liter"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="purchase_price">
+                            Harga Beli
+                        </label>
+
+                        <input
+                            type="number"
+                            id="purchase_price"
+                            name="purchase_price"
+                            min="0"
+                            step="1000"
+                            value="0"
+                            placeholder="Contoh: 15000"
+                            required
+                        >
+
+                        <small class="form-help-text">
+                            Panah naik/turun berubah Rp1.000.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="selling_price">
+                            Harga Jual
+                        </label>
+
+                        <input
+                            type="number"
+                            id="selling_price"
+                            name="selling_price"
+                            min="0"
+                            step="1000"
+                            value="0"
+                            placeholder="Contoh: 18000"
+                            required
+                        >
+
+                        <small class="form-help-text">
+                            Panah naik/turun berubah Rp1.000.
+                        </small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock">
+                            Stok Awal
+                        </label>
+
+                        <input
+                            type="number"
+                            id="stock"
+                            name="stock"
+                            min="0"
+                            step="1"
+                            placeholder="Contoh: 25"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="min_stock">
+                            Stok Minimum
+                        </label>
+
+                        <input
+                            type="number"
+                            id="min_stock"
+                            name="min_stock"
+                            min="0"
+                            step="1"
+                            value="5"
+                            required
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unit">
+                            Satuan Produk
+                        </label>
+
+                        <select
+                            id="unit"
+                            name="unit"
+                            required
+                        >
+                            <option value="pcs">pcs</option>
+                            <option value="botol">botol</option>
+                            <option value="bungkus">bungkus</option>
+                            <option value="sachet">sachet</option>
+                            <option value="pack">pack</option>
+                            <option value="dus">dus</option>
+                            <option value="kotak">kotak</option>
+                            <option value="karung">karung</option>
+                            <option value="kg">kg</option>
+                            <option value="gram">gram</option>
+                            <option value="liter">liter</option>
+                            <option value="ml">ml</option>
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="checkbox-group">
+                    <input
+                        type="checkbox"
+                        id="is_active"
+                        name="is_active"
+                        checked
+                    >
+
+                    <label for="is_active">
+                        Produk aktif dan dapat dibeli oleh customer
+                    </label>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-primary">
+                        ➕ Tambah Produk
+                    </button>
+                </div>
+            </form>
+
+        </section>
+
+        <br>
+        {% endif %}
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Daftar Produk</h2>
+
+                    <p>
+                        Cari produk berdasarkan kode, nama, atau kategori barang.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                action="{{ url_for('products') }}"
+                method="GET"
+                class="search-form"
+            >
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search }}"
+                    placeholder="Cari kode produk, nama produk, atau kategori..."
+                >
+
+                <button type="submit" class="btn-primary">
+                    🔎 Cari
+                </button>
+
+                <a
+                    href="{{ url_for('products') }}"
+                    class="btn-secondary"
+                >
+                    Reset
+                </a>
+            </form>
+
+            <br>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Kode</th>
+                            <th>Nama Produk</th>
+                            <th>Kategori</th>
+                            <th>Harga Beli</th>
+                            <th>Harga Jual</th>
+                            <th>Stok</th>
+                            <th>Min. Stok</th>
+                            <th>Satuan</th>
+                            <th>Status</th>
+
+                            {% if current_user.role == "admin" %}
+                            <th>Aksi</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ product[1] }}</td>
+
+                            <td>
+                                <strong>{{ product[2] }}</strong>
+                            </td>
+
+                            <td>{{ product[3] }}</td>
+
+                            <td>
+                                Rp{{ "{:,.0f}".format(product[4]).replace(",", ".") }}
+                            </td>
+
+                            <td>
+                                Rp{{ "{:,.0f}".format(product[5]).replace(",", ".") }}
+                            </td>
+
+                            <td>
+                                {% if product[6] <= product[7] %}
+                                    <strong style="color: #c91f2b;">
+                                        {{ product[6] }}
+                                    </strong>
+                                {% else %}
+                                    {{ product[6] }}
+                                {% endif %}
+                            </td>
+
+                            <td>{{ product[7] }}</td>
+                            <td>{{ product[8] }}</td>
+
+                            <td>
+                                {% if not product[9] %}
+                                    <span class="status-badge cancelled">
+                                        Nonaktif
+                                    </span>
+
+                                {% elif product[6] <= product[7] %}
+                                    <span class="status-badge pending">
+                                        Stok Menipis
+                                    </span>
+
+                                {% else %}
+                                    <span class="status-badge completed">
+                                        Aktif
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            {% if current_user.role == "admin" %}
+                            <td>
+                                <a
+                                    href="{{ url_for('edit_product', product_id=product[0]) }}"
+                                    class="btn-edit"
+                                >
+                                    ✏️ Edit
+                                </a>
+
+                                <form
+                                    action="{{ url_for('delete_product', product_id=product[0]) }}"
+                                    method="POST"
+                                    class="inline-form"
+                                    onsubmit="return confirm('Yakin ingin menghapus produk ini?');"
+                                >
+                                    <button
+                                        type="submit"
+                                        class="btn-delete"
+                                    >
+                                        🗑️ Hapus
+                                    </button>
+                                </form>
+                            </td>
+                            {% endif %}
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td
+                                colspan="{% if current_user.role == 'admin' %}11{% else %}10{% endif %}"
+                                class="empty-data"
+                            >
+                                Data produk tidak ditemukan.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Laporan - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">S</div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">
+            {% if current_user.role == "admin" %}
+                MENU ADMIN
+            {% else %}
+                MENU KASIR
+            {% endif %}
+        </p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            {% if current_user.role == "admin" %}
+            <li>
+                <a href="{{ url_for('categories') }}">
+                    📁 Kategori Barang
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a href="{{ url_for('products') }}">
+                    📦 Data Produk
+                </a>
+            </li>
+
+            {% if current_user.role == "kasir" %}
+            <li>
+                <a href="{{ url_for('staff_orders') }}">
+                    💳 Proses Pesanan
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a
+                    href="{{ url_for('reports') }}"
+                    class="active"
+                >
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        {% if current_user.role == "admin" %}
+                            ADMINISTRATOR
+                        {% else %}
+                            KASIR
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <span class="page-kicker">
+                    PUSAT ANALISIS TOKO
+                </span>
+
+                <h1>Laporan Terpadu</h1>
+
+                <p>
+                    Pantau pembayaran customer, produk yang terjual,
+                    serta kondisi stok Sahabat Desa Mart.
+                </p>
+            </div>
+
+            <button
+                type="button"
+                class="btn-primary no-print"
+                onclick="window.print()"
+            >
+                🖨️ Cetak Laporan
+            </button>
+        </section>
+
+        <section class="content-card report-filter no-print">
+
+            <div class="report-filter-heading">
+                <div class="report-filter-icon">⚙️</div>
+
+                <div>
+                    <h2>Filter Laporan</h2>
+
+                    <p>
+                        Tentukan jenis laporan, periode, kategori,
+                        dan data yang ingin ditampilkan.
+                    </p>
+                </div>
+            </div>
+
+            <form
+                action="{{ url_for('reports') }}"
+                method="GET"
+            >
+
+                <div class="report-filter-grid">
+
+                    <div class="form-group">
+                        <label for="report_type">
+                            Jenis Laporan
+                        </label>
+
+                        <select id="report_type" name="report_type">
+                            <option
+                                value="sales"
+                                {% if report_type == "sales" %}selected{% endif %}
+                            >
+                                Pembayaran Customer
+                            </option>
+
+                            <option
+                                value="product_sales"
+                                {% if report_type == "product_sales" %}selected{% endif %}
+                            >
+                                Produk Terjual
+                            </option>
+
+                            <option
+                                value="stock"
+                                {% if report_type == "stock" %}selected{% endif %}
+                            >
+                                Stok Produk
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date_from">
+                            Tanggal Mulai
+                        </label>
+
+                        <input
+                            type="date"
+                            id="date_from"
+                            name="date_from"
+                            value="{{ date_from }}"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date_to">
+                            Tanggal Sampai
+                        </label>
+
+                        <input
+                            type="date"
+                            id="date_to"
+                            name="date_to"
+                            value="{{ date_to }}"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="category_id">
+                            Kategori Produk
+                        </label>
+
+                        <select id="category_id" name="category_id">
+                            <option value="0">
+                                Semua Kategori
+                            </option>
+
+                            {% for category in categories %}
+                            <option
+                                value="{{ category[0] }}"
+                                {% if category_id == category[0] %}selected{% endif %}
+                            >
+                                {{ category[1] }} - {{ category[2] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">
+                            Status Pesanan
+                        </label>
+
+                        <select id="status" name="status">
+                            <option value="">
+                                Semua Status
+                            </option>
+
+                            <option
+                                value="pending"
+                                {% if status_filter == "pending" %}selected{% endif %}
+                            >
+                                Menunggu Pembayaran
+                            </option>
+
+                            <option
+                                value="confirmed"
+                                {% if status_filter == "confirmed" %}selected{% endif %}
+                            >
+                                Sudah Dibayar - Siap Diambil
+                            </option>
+
+                            <option
+                                value="completed"
+                                {% if status_filter == "completed" %}selected{% endif %}
+                            >
+                                Pesanan Selesai
+                            </option>
+
+                            <option
+                                value="cancelled"
+                                {% if status_filter == "cancelled" %}selected{% endif %}
+                            >
+                                Dibatalkan
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock_filter">
+                            Kondisi Stok
+                        </label>
+
+                        <select id="stock_filter" name="stock_filter">
+                            <option value="">
+                                Semua Kondisi
+                            </option>
+
+                            <option
+                                value="available"
+                                {% if stock_filter == "available" %}selected{% endif %}
+                            >
+                                Stok Aman
+                            </option>
+
+                            <option
+                                value="low_stock"
+                                {% if stock_filter == "low_stock" %}selected{% endif %}
+                            >
+                                Stok Menipis
+                            </option>
+
+                            <option
+                                value="inactive"
+                                {% if stock_filter == "inactive" %}selected{% endif %}
+                            >
+                                Produk Nonaktif
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group report-keyword">
+                        <label for="keyword">
+                            Kata Kunci
+                        </label>
+
+                        <input
+                            type="text"
+                            id="keyword"
+                            name="keyword"
+                            value="{{ keyword }}"
+                            placeholder="Cari invoice, customer, kasir, produk, atau kategori..."
+                        >
+                    </div>
+
+                </div>
+
+                <div class="report-filter-actions">
+                    <button type="submit" class="btn-primary">
+                        🔎 Tampilkan Laporan
+                    </button>
+
+                    <a
+                        href="{{ url_for('reports') }}"
+                        class="btn-secondary"
+                    >
+                        ↻ Reset Filter
+                    </a>
+                </div>
+
+            </form>
+        </section>
+
+        <section class="report-print-header">
+            <div class="report-print-brand">
+                <div class="report-print-logo">S</div>
+
+                <div>
+                    <h1>Sahabat Desa Mart</h1>
+                    <p>Belanja Dekat, Manfaat Hebat</p>
+                </div>
+            </div>
+
+            <div class="report-print-meta">
+                <p>
+                    <strong>Jenis Laporan:</strong>
+
+                    {% if report_type == "sales" %}
+                        Pembayaran Customer
+                    {% elif report_type == "product_sales" %}
+                        Produk Terjual
+                    {% else %}
+                        Stok Produk
+                    {% endif %}
+                </p>
+
+                <p>
+                    <strong>Periode:</strong>
+                    {{ date_from }} s.d. {{ date_to }}
+                </p>
+
+                <p>
+                    <strong>Dicetak:</strong>
+                    <span id="print-date"></span>
+                </p>
+            </div>
+        </section>
+
+        {% if report_type == "sales" %}
+
+        <section class="stats-grid report-summary-grid">
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">🧾</div>
+
+                <div>
+                    <p>Total Pesanan Dibayar</p>
+                    <h2>{{ summary[0] }}</h2>
+                    <span>QRIS, E-Wallet, dan tunai</span>
+                </div>
+            </article>
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">🛒</div>
+
+                <div>
+                    <p>Total Item Terjual</p>
+                    <h2>{{ summary[1] }}</h2>
+                    <span>Dari pesanan yang dibayar</span>
+                </div>
+            </article>
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">💰</div>
+
+                <div>
+                    <p>Total Omzet</p>
+
+                    <h2>
+                        Rp{{ "{:,.0f}".format(summary[2]).replace(",", ".") }}
+                    </h2>
+
+                    <span>Akumulasi transaksi berhasil</span>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="content-card report-table-card">
+
+            <div class="report-table-heading">
+                <div>
+                    <span class="table-kicker">
+                        RINGKASAN TRANSAKSI
+                    </span>
+
+                    <h2>Laporan Pembayaran Customer</h2>
+
+                    <p>
+                        Riwayat pesanan berdasarkan metode pembayaran
+                        dan status transaksi.
+                    </p>
+                </div>
+
+                <div class="report-period-badge">
+                    📅 {{ date_from }} — {{ date_to }}
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Invoice</th>
+                            <th>Tanggal</th>
+                            <th>Customer</th>
+                            <th>Kasir</th>
+                            <th>Total Item</th>
+                            <th>Total</th>
+                            <th>Pembayaran</th>
+                            <th>Status</th>
+                            <th class="no-print">Struk</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in report_rows %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+
+                            <td>
+                                <strong>{{ row[1] }}</strong>
+                            </td>
+
+                            <td>
+                                {{ row[2].strftime("%d-%m-%Y %H:%M") }}
+                            </td>
+
+                            <td>{{ row[3] }}</td>
+                            <td>{{ row[4] }}</td>
+                            <td>{{ row[5] }}</td>
+
+                            <td>
+                                <strong>
+                                    Rp{{ "{:,.0f}".format(row[6]).replace(",", ".") }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {% if row[10] == "cash" %}
+                                    Tunai
+                                {% elif row[10] == "qris" %}
+                                    QRIS
+                                {% elif row[10] == "ewallet" %}
+                                    E-Wallet
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if row[9] == "pending" %}
+                                    <span class="status-badge pending">
+                                        Menunggu Bayar
+                                    </span>
+
+                                {% elif row[9] == "confirmed" %}
+                                    <span class="status-badge completed">
+                                        Siap Diambil
+                                    </span>
+
+                                {% elif row[9] == "completed" %}
+                                    <span class="status-badge completed">
+                                        Selesai
+                                    </span>
+
+                                {% else %}
+                                    <span class="status-badge cancelled">
+                                        Dibatalkan
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="no-print">
+                                <a
+                                    href="{{ url_for('sale_receipt', sale_id=row[0]) }}"
+                                    class="btn-edit"
+                                >
+                                    🧾 Struk
+                                </a>
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="10" class="empty-data">
+                                Tidak ada data pembayaran untuk filter yang dipilih.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        {% elif report_type == "product_sales" %}
+
+        <section class="stats-grid report-summary-grid">
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">📦</div>
+
+                <div>
+                    <p>Produk Terjual</p>
+                    <h2>{{ summary[0] }}</h2>
+                    <span>Total unit barang terjual</span>
+                </div>
+            </article>
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">🏷️</div>
+
+                <div>
+                    <p>Jenis Produk</p>
+                    <h2>{{ summary[2] }}</h2>
+                    <span>Produk yang memiliki penjualan</span>
+                </div>
+            </article>
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">💰</div>
+
+                <div>
+                    <p>Total Penjualan</p>
+
+                    <h2>
+                        Rp{{ "{:,.0f}".format(summary[1]).replace(",", ".") }}
+                    </h2>
+
+                    <span>Akumulasi produk terjual</span>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="content-card report-table-card">
+
+            <div class="report-table-heading">
+                <div>
+                    <span class="table-kicker">
+                        ANALISIS PRODUK
+                    </span>
+
+                    <h2>Laporan Produk Terjual</h2>
+
+                    <p>
+                        Produk ditampilkan berdasarkan jumlah penjualan terbanyak.
+                    </p>
+                </div>
+
+                <div class="report-period-badge">
+                    📅 {{ date_from }} — {{ date_to }}
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Kode Produk</th>
+                            <th>Nama Produk</th>
+                            <th>Kategori</th>
+                            <th>Jumlah Terjual</th>
+                            <th>Total Penjualan</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in report_rows %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ row[0] }}</td>
+
+                            <td>
+                                <strong>{{ row[1] }}</strong>
+                            </td>
+
+                            <td>{{ row[2] }}</td>
+                            <td>{{ row[3] }}</td>
+
+                            <td>
+                                <strong>
+                                    Rp{{ "{:,.0f}".format(row[4]).replace(",", ".") }}
+                                </strong>
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="empty-data">
+                                Belum ada produk terjual pada periode tersebut.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        {% else %}
+
+        <section class="stats-grid report-summary-grid">
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">📦</div>
+
+                <div>
+                    <p>Total Produk</p>
+                    <h2>{{ summary[0] }}</h2>
+                    <span>Produk pada kategori terpilih</span>
+                </div>
+            </article>
+
+            <article class="stat-card report-stat-card">
+                <div class="stat-icon">🏪</div>
+
+                <div>
+                    <p>Total Stok</p>
+                    <h2>{{ summary[1] }}</h2>
+                    <span>Jumlah stok seluruh produk</span>
+                </div>
+            </article>
+
+            <article class="stat-card warning-card report-stat-card">
+                <div class="stat-icon">⚠️</div>
+
+                <div>
+                    <p>Stok Menipis</p>
+                    <h2>{{ summary[2] }}</h2>
+                    <span>Produk perlu diperiksa</span>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="content-card report-table-card">
+
+            <div class="report-table-heading">
+                <div>
+                    <span class="table-kicker">
+                        MONITORING INVENTARIS
+                    </span>
+
+                    <h2>Laporan Stok Produk</h2>
+
+                    <p>
+                        Kondisi stok terkini produk Sahabat Desa Mart.
+                    </p>
+                </div>
+
+                <div class="report-period-badge">
+                    📦 Stok Terkini
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Kode Produk</th>
+                            <th>Nama Produk</th>
+                            <th>Kategori</th>
+                            <th>Stok</th>
+                            <th>Min. Stok</th>
+                            <th>Satuan</th>
+                            <th>Harga Jual</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in report_rows %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ row[0] }}</td>
+
+                            <td>
+                                <strong>{{ row[1] }}</strong>
+                            </td>
+
+                            <td>{{ row[2] }}</td>
+
+                            <td>
+                                {% if row[3] <= row[4] %}
+                                    <strong style="color: #c91f2b;">
+                                        {{ row[3] }}
+                                    </strong>
+                                {% else %}
+                                    {{ row[3] }}
+                                {% endif %}
+                            </td>
+
+                            <td>{{ row[4] }}</td>
+                            <td>{{ row[5] }}</td>
+
+                            <td>
+                                <strong>
+                                    Rp{{ "{:,.0f}".format(row[6]).replace(",", ".") }}
+                                </strong>
+                            </td>
+
+                            <td>
+                                {% if not row[7] %}
+                                    <span class="status-badge cancelled">
+                                        Nonaktif
+                                    </span>
+
+                                {% elif row[3] <= row[4] %}
+                                    <span class="status-badge pending">
+                                        Stok Menipis
+                                    </span>
+
+                                {% else %}
+                                    <span class="status-badge completed">
+                                        Stok Aman
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="empty-data">
+                                Tidak ada data stok untuk filter yang dipilih.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+    <script>
+        const printDate = document.getElementById("print-date");
+
+        if (printDate) {
+            printDate.textContent = new Date().toLocaleString("id-ID", {
+                day: "2-digit",
+                month: "long",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        }
+    </script>
+
+</body>
+</html>

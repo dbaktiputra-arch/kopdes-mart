@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Transaksi Penjualan - KOPDES Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-logo">K</div>
+            <h2>KOPDES Mart</h2>
+            <p>Koperasi Desa Merah Putih</p>
+        </div>
+
+        <p class="menu-title">MENU UTAMA</p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            {% if current_user.role == "admin" %}
+            <li>
+                <a href="{{ url_for('categories') }}">
+                    📁 Kategori Barang
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a href="{{ url_for('products') }}">
+                    📦 Data Produk
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('sales') }}" class="active">
+                    🛒 Transaksi Penjualan
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('staff_orders') }}">
+                    📦 Pesanan Customer
+                </a>
+            </li>
+
+            <li>
+                <a href="{{ url_for('reports') }}">
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        {% if current_user.role == "admin" %}
+                            ADMINISTRATOR
+                        {% elif current_user.role == "kasir" %}
+                            KASIR
+                        {% else %}
+                            CUSTOMER
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Transaksi Penjualan</h1>
+                <p>Kasir KOPDES Mart — {{ current_user.full_name }}</p>
+            </div>
+
+            <div class="user-box">
+                🛒 Keranjang: {{ pos_cart_count }} Item
+            </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="checkout-grid">
+
+            <div class="content-card">
+                <h2>Tambah Produk ke Keranjang</h2>
+
+                <form action="{{ url_for('pos_cart_add') }}" method="POST">
+                    <div class="form-group">
+                        <label for="product_id">Pilih Produk</label>
+
+                        <select id="product_id" name="product_id" required>
+                            <option value="">-- Pilih Produk --</option>
+
+                            {% for product in products %}
+                            <option value="{{ product[0] }}">
+                                {{ product[1] }} - {{ product[2] }}
+                                | Rp{{ "{:,.0f}".format(product[3]).replace(",", ".") }}
+                                | Stok {{ product[4] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="quantity">Jumlah Beli</label>
+
+                        <input
+                            type="number"
+                            id="quantity"
+                            name="quantity"
+                            min="1"
+                            value="1"
+                            required
+                        >
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        + Masukkan Keranjang
+                    </button>
+                </form>
+            </div>
+
+            <div class="content-card total-card">
+                <p>Total Item</p>
+                <h2>{{ total_items }} Item</h2>
+
+                <p>Total Belanja</p>
+                <h1>
+                    Rp{{ "{:,.0f}".format(total_amount).replace(",", ".") }}
+                </h1>
+
+                <p class="muted-text">
+                    Pastikan uang bayar sudah sesuai sebelum menyimpan transaksi.
+                </p>
+            </div>
+
+        </section>
+
+        <br>
+
+        <section class="content-card">
+            <div class="section-heading">
+                <div>
+                    <h2>Keranjang Transaksi</h2>
+                    <p>Produk yang akan diproses pada transaksi ini.</p>
+                </div>
+            </div>
+
+            {% if cart_items %}
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Produk</th>
+                            <th>Harga</th>
+                            <th>Jumlah</th>
+                            <th>Subtotal</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in cart_items %}
+                        <tr>
+                            <td>{{ item.product_code }}</td>
+                            <td>{{ item.product_name }}</td>
+
+                            <td>
+                                Rp{{ "{:,.0f}".format(item.selling_price).replace(",", ".") }}
+                            </td>
+
+                            <td>
+                                <form
+                                    action="{{ url_for('pos_cart_update') }}"
+                                    method="POST"
+                                    class="quantity-form"
+                                >
+                                    <input
+                                        type="hidden"
+                                        name="product_id"
+                                        value="{{ item.id }}"
+                                    >
+
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        min="0"
+                                        max="{{ item.stock }}"
+                                        value="{{ item.quantity }}"
+                                        required
+                                    >
+
+                                    <button type="submit" class="btn-edit">
+                                        Update
+                                    </button>
+                                </form>
+                            </td>
+
+                            <td>
+                                Rp{{ "{:,.0f}".format(item.subtotal).replace(",", ".") }}
+                            </td>
+
+                            <td>
+                                <form
+                                    action="{{ url_for('pos_cart_remove', product_id=item.id) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Hapus produk ini dari keranjang?');"
+                                >
+                                    <button type="submit" class="btn-delete">
+                                        Hapus
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <br>
+
+            <form
+                action="{{ url_for('pos_checkout') }}"
+                method="POST"
+                class="payment-form"
+            >
+                <div class="form-group">
+                    <label for="cash_amount">Uang Bayar</label>
+
+                    <input
+                        type="number"
+                        id="cash_amount"
+                        name="cash_amount"
+                        min="0"
+                        placeholder="Contoh: 50000"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Catatan Transaksi</label>
+
+                    <input
+                        type="text"
+                        id="notes"
+                        name="notes"
+                        placeholder="Opsional"
+                    >
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    Simpan Transaksi
+                </button>
+            </form>
+
+            {% else %}
+            <div class="empty-product">
+                <h3>Keranjang masih kosong</h3>
+                <p>Pilih produk di atas untuk mulai melakukan transaksi.</p>
+            </div>
+            {% endif %}
+        </section>
+
+    </main>
+
+</body>
+</html>

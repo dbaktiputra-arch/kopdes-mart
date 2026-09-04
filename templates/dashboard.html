@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard - Sahabat Desa Mart</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body class="dashboard-page">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="logo">
+            </div>
+            <h2>Sahabat Desa Mart</h2>
+            <p>Belanja Dekat, Manfaat Hebat</p>
+        </div>
+
+        <p class="menu-title">
+            {% if current_user.role == "admin" %}
+                MENU ADMIN
+            {% else %}
+                MENU KASIR
+            {% endif %}
+        </p>
+
+        <ul class="sidebar-menu">
+            <li>
+                <a
+                    href="{{ url_for('dashboard') }}"
+                    class="active"
+                >
+                    🏠 Dashboard
+                </a>
+            </li>
+
+            {% if current_user.role == "admin" %}
+            <li>
+                <a href="{{ url_for('categories') }}">
+                    📁 Kategori Barang
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a href="{{ url_for('products') }}">
+                    📦 Data Produk
+                </a>
+            </li>
+
+            {% if current_user.role == "kasir" %}
+            <li>
+                <a href="{{ url_for('staff_orders') }}">
+                    💳 Proses Pesanan
+                </a>
+            </li>
+            {% endif %}
+
+            <li>
+                <a href="{{ url_for('reports') }}">
+                    📊 Laporan
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-bottom">
+
+            <p class="menu-title">AKUN</p>
+
+            <div class="sidebar-account-card">
+                <div class="sidebar-account-avatar">
+                    {{ current_user.full_name[0]|upper }}
+                </div>
+
+                <div class="sidebar-account-info">
+                    <p class="sidebar-account-name">
+                        {{ current_user.full_name }}
+                    </p>
+
+                    <p class="sidebar-account-username">
+                        @{{ current_user.username }}
+                    </p>
+
+                    <span class="sidebar-role-badge">
+                        {% if current_user.role == "admin" %}
+                            ADMINISTRATOR
+                        {% else %}
+                            KASIR
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('logout') }}">
+                        🚪 Logout
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </aside>
+
+    <main class="main-content">
+
+        <section class="topbar">
+            <div>
+                <h1>Dashboard</h1>
+
+                <p>
+                    Selamat datang,
+                    <strong>{{ current_user.full_name }}</strong>.
+                    Pantau aktivitas Sahabat Desa Mart dari halaman ini.
+                </p>
+            </div>
+
+            <div class="user-box">
+                👤
+                {% if current_user.role == "admin" %}
+                    Administrator
+                {% else %}
+                    Kasir
+                {% endif %}
+            </div>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="flash-message {{ category }}">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="stats-grid">
+
+            <article class="stat-card">
+                <div class="stat-icon">📁</div>
+
+                <div>
+                    <p>Total Kategori</p>
+                    <h2>{{ total_categories }}</h2>
+                    <span>Kategori aktif</span>
+                </div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon">📦</div>
+
+                <div>
+                    <p>Total Produk</p>
+                    <h2>{{ total_products }}</h2>
+                    <span>Produk aktif</span>
+                </div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon">🧾</div>
+
+                <div>
+                    <p>Pesanan Dibayar Hari Ini</p>
+                    <h2>{{ total_transactions_today }}</h2>
+                    <span>Online dan tunai</span>
+                </div>
+            </article>
+
+            <article class="stat-card">
+                <div class="stat-icon">💰</div>
+
+                <div>
+                    <p>Omzet Hari Ini</p>
+
+                    <h2>
+                        Rp{{ "{:,.0f}".format(omzet_today).replace(",", ".") }}
+                    </h2>
+
+                    <span>Pesanan yang sudah dibayar</span>
+                </div>
+            </article>
+
+            <article class="stat-card warning-card">
+                <div class="stat-icon">⚠️</div>
+
+                <div>
+                    <p>Stok Menipis</p>
+                    <h2>{{ low_stock_products }}</h2>
+                    <span>Produk perlu dicek</span>
+                </div>
+            </article>
+
+        </section>
+
+        <section class="content-card">
+
+            <div class="section-heading">
+                <div>
+                    <h2>Akses Cepat</h2>
+
+                    <p>
+                        Gunakan menu berikut untuk menjalankan operasional toko.
+                    </p>
+                </div>
+            </div>
+
+            <div class="quick-menu-grid">
+
+                {% if current_user.role == "admin" %}
+                <a
+                    href="{{ url_for('categories') }}"
+                    class="quick-menu-card"
+                >
+                    <span class="quick-icon">📁</span>
+
+                    <h3>Kategori Barang</h3>
+
+                    <p>
+                        Kelola kategori produk untuk data master Sahabat Desa Mart.
+                    </p>
+                </a>
+                {% endif %}
+
+                <a
+                    href="{{ url_for('products') }}"
+                    class="quick-menu-card"
+                >
+                    <span class="quick-icon">📦</span>
+
+                    <h3>Data Produk</h3>
+
+                    <p>
+                        Pantau harga, stok, kategori, dan status produk toko.
+                    </p>
+                </a>
+
+                {% if current_user.role == "kasir" %}
+                <a
+                    href="{{ url_for('staff_orders') }}"
+                    class="quick-menu-card"
+                >
+                    <span class="quick-icon">💳</span>
+
+                    <h3>Proses Pesanan</h3>
+
+                    <p>
+                        Terima pembayaran tunai dan serahkan barang pesanan online.
+                    </p>
+                </a>
+                {% endif %}
+
+                <a
+                    href="{{ url_for('reports') }}"
+                    class="quick-menu-card"
+                >
+                    <span class="quick-icon">📊</span>
+
+                    <h3>Laporan</h3>
+
+                    <p>
+                        Lihat laporan pembayaran, produk terjual, dan stok produk.
+                    </p>
+                </a>
+
+            </div>
+
+        </section>
+
+        <section
+            class="content-card"
+            style="margin-top: 22px;"
+        >
+            <div class="section-heading">
+                <div>
+                    <h2>Alur Belanja Sahabat Desa Mart</h2>
+
+                    <p>
+                        Sistem mendukung pembelian online dan pembelian langsung di toko.
+                    </p>
+                </div>
+            </div>
+
+            <div class="dashboard-extra-grid">
+
+                <article class="dashboard-extra-card">
+                    <h3>🏪 Tunai di Kasir</h3>
+
+                    <p>
+                        Customer membuat pesanan, datang ke toko, lalu kasir menerima
+                        pembayaran tunai. Stok berkurang setelah pembayaran berhasil.
+                    </p>
+                </article>
+
+                <article class="dashboard-extra-card">
+                    <h3>📱 QRIS dan E-Wallet</h3>
+
+                    <p>
+                        Customer membayar melalui simulasi pembayaran online.
+                        Status pesanan menjadi siap diambil dan stok langsung berkurang.
+                    </p>
+                </article>
+
+                <article class="dashboard-extra-card">
+                    <h3>📦 Pengambilan Barang</h3>
+
+                    <p>
+                        Kasir memeriksa nomor pesanan customer, menyerahkan barang,
+                        lalu mengubah status pesanan menjadi selesai.
+                    </p>
+                </article>
+
+            </div>
+        </section>
+
+        <section
+            class="content-card"
+            style="margin-top: 22px;"
+        >
+            <div class="section-heading">
+                <div>
+                    <h2>Informasi Operasional</h2>
+
+                    <p>
+                        Panduan ringkas untuk menjaga pelayanan toko tetap lancar.
+                    </p>
+                </div>
+            </div>
+
+            <div class="dashboard-extra-grid">
+
+                <article class="dashboard-extra-card">
+                    <h3>🕘 Jam Operasional</h3>
+
+                    <p>
+                        Sahabat Desa Mart melayani customer setiap hari pukul
+                        <strong>08.00</strong> sampai
+                        <strong>21.00 WIB</strong>.
+                    </p>
+                </article>
+
+                <article class="dashboard-extra-card">
+                    <h3>📦 Pengelolaan Stok</h3>
+
+                    <p>
+                        Pantau stok minimum secara rutin agar produk penting
+                        tetap tersedia untuk kebutuhan customer.
+                    </p>
+                </article>
+
+                <article class="dashboard-extra-card">
+                    <h3>📊 Evaluasi Penjualan</h3>
+
+                    <p>
+                        Gunakan laporan untuk melihat omzet, produk terlaris,
+                        metode pembayaran, serta kondisi stok barang.
+                    </p>
+                </article>
+
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>
